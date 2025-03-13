@@ -10,5 +10,5 @@ Splitting tasks into different modules.
 1. For Fish:
 
 2. For Scene:
-    - Underwater Gaussian Splatting
+    - [Underwater Gaussian Splatting](https://github.com/water-splatting/water-splatting)
         - [Prepare dataset](https://github.com/deborahLevy130/seathru_NeRF?tab=readme-ov-file#using-your-own-data)
