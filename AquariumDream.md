@@ -1,4 +1,4 @@
-# AquariumDream
+# AquariumDream (or Aquarium4D first?)
 
 ## 3/13/2025
 
@@ -7,4 +7,8 @@ Splitting tasks into different modules.
 
 ### How things going:
 
-1. 
+1. For Fish:
+
+2. For Scene:
+    - Underwater Gaussian Splatting
+        - [Prepare dataset](https://github.com/deborahLevy130/seathru_NeRF?tab=readme-ov-file#using-your-own-data)

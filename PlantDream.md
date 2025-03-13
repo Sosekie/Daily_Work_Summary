@@ -7,7 +7,7 @@ Get HF format plant dataset.
 
 ### How things going:
 
-1. Trying [finetrainers](https://github.com/a-r-r-o-w/finetrainers?tab=readme-ov-file#training).
+1. Trying [finetrainers](https://github.com/a-r-r-o-w/finetrainers?tab=readme-ov-file#support-matrix).
     - Getting [Dataset](https://github.com/a-r-r-o-w/finetrainers/blob/main/docs/dataset/README.md#two-file-format).
         - Go through [video-dataset-scripts](https://github.com/huggingface/video-dataset-scripts?tab=readme-ov-file#video-dataset-scripts).
             - Go through [video_processing](https://github.com/huggingface/video-dataset-scripts/tree/main/video_processing).
