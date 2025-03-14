@@ -1,5 +1,15 @@
 # PlantDream
 
+## 3/14/2025
+
+### Main Object:
+Get HF format plant dataset.
+
+### How things going:
+
+1. Since LTX-Video using [crush-smol](https://huggingface.co/datasets/finetrainers/crush-smol), see details of it.
+
+
 ## 3/13/2025
 
 ### Main Object:
@@ -19,4 +29,4 @@ Get HF format plant dataset.
         - [x] Moving all steps to cluster.
             - [x] Uploading zip.
 
-    - Trying [LTX-Video](https://github.com/a-r-r-o-w/finetrainers/blob/main/docs/models/ltx_video.md).
+    - [x] Trying [LTX-Video](https://github.com/a-r-r-o-w/finetrainers/blob/main/docs/models/ltx_video.md).
