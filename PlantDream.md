@@ -7,15 +7,18 @@ Get HF format plant dataset.
 
 ### How things going:
 
-- [x] Since LTX-Video using [crush-smol](https://huggingface.co/datasets/finetrainers/crush-smol), see details of it.
-- [x] Finetune on plant_time_lapse dataset.
-- [x] Create examples/training/sft/ltx_video/plant_time_lapse
-- [x] input images?
-- [ ] Inference stucked (image size, prompt length)
-- [ ] Check settings ("id_token": "PIKA_CRUSH", --enable_precomputation).
-- [ ] Generate new prompt (using first and last frames?)
-- [ ] Num of frames (speed)
-- [ ] Camera motion
+1. LTX-Video Type Datasets
+    - [x] Since LTX-Video using [crush-smol](https://huggingface.co/datasets/finetrainers/crush-smol), see details of it.
+    - [x] Finetune on plant_time_lapse dataset.
+    - [x] Create examples/training/sft/ltx_video/plant_time_lapse
+    - [x] input images
+    - [ ] Inference stucked (image size( ), prompt length(no))
+    - [ ] Check settings ("id_token": "PIKA_CRUSH", --enable_precomputation).
+2. Datasets
+    - [ ] Generate new prompt (using first and last frames?)
+    - [ ] Num of frames (speed)
+    - [ ] Camera motion
+    - [ ] **Process Youtube Video manually.**
 
 
 ## 3/13/2025
