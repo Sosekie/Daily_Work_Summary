@@ -1,13 +1,21 @@
 # PlantDream
 
-## 3/14/2025
+## 3/14/2025 - 3/15/2025
 
 ### Main Object:
 Get HF format plant dataset.
 
 ### How things going:
 
-1. Since LTX-Video using [crush-smol](https://huggingface.co/datasets/finetrainers/crush-smol), see details of it.
+- [x] Since LTX-Video using [crush-smol](https://huggingface.co/datasets/finetrainers/crush-smol), see details of it.
+- [x] Finetune on plant_time_lapse dataset.
+- [x] Create examples/training/sft/ltx_video/plant_time_lapse
+- [x] input images?
+- [ ] Inference stucked (image size, prompt length)
+- [ ] Check settings ("id_token": "PIKA_CRUSH", --enable_precomputation).
+- [ ] Generate new prompt (using first and last frames?)
+- [ ] Num of frames (speed)
+- [ ] Camera motion
 
 
 ## 3/13/2025
