@@ -1,5 +1,10 @@
 # PlantDream
 
+- optical flow RAFT, visualize the area to see it is wrong.
+- LTX, image input-output.
+- Data washing.
+- sds loss.
+
 ## 3/14/2025 - 3/15/2025
 
 ### Main Object:
@@ -19,6 +24,10 @@ Get HF format plant dataset.
     - [ ] Num of frames (speed)
     - [ ] Camera motion
     - [ ] **Process Youtube Video manually.**
+
+    - 1. histogram，optical flow，pixel level rgb
+    - 2. resnet feature，dino feature (take t and t+1 frame and plot 0-1, 1-2, 2-3)
+    - ![dino](dino.jpg)
 
 
 ## 3/13/2025
