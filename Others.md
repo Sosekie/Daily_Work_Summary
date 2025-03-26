@@ -18,3 +18,4 @@
     2. Monocular Non-rigid Reconstruction:
         - [Recent Trends in 3D Reconstruction of General Non-Rigid Scenes](https://arxiv.org/pdf/2403.15064)
         - [State of the Art in Dense Monocular Non-Rigid 3D Reconstruction](https://arxiv.org/pdf/2210.15664)
+    3. 3D Controllable Deformation
