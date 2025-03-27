@@ -2,8 +2,6 @@
 
 ## 3/27/2025
 
-Paolo: 
-
 - ViSER
 
 The reference to “ViSER [YSJ21b] (from scratch)” in the chat suggests a desire for a more complete, from-scratch exposition of the key ideas and contributions of this approach.
