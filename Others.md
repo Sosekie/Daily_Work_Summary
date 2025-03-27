@@ -1,5 +1,29 @@
 # TODO List
 
+## 3/27/2025
+
+Paolo: 
+
+- ViSER
+
+The reference to “ViSER [YSJ21b] (from scratch)” in the chat suggests a desire for a more complete, from-scratch exposition of the key ideas and contributions of this approach.
+
+- BANMo
+
+BANMo [YVN22]” was included, along with its use of Continuous Surface Embeddings (labeled [NNS20] in the chat). The teacher wants a more in-depth or systematic description, not just a surface mention.
+
+- LASSIE (DINO)
+
+Mentioned separately again by the teacher, stating that he/she would like to see the idea of this paper, the mechanism of combining it with large-scale characterization models such as DINO, etc.
+
+- Dense Tracking series
+
+Includes “\cite{Cho_2024_CVPR, harley2022particle, CoTracker24, TAPIR, TrackingEverythingEverywhere, faster, etc}” in the citation. These articles focus on approaches in the field of “long-term dense tracking” or “arbitrary point tracking”, and I look forward to comparing and explaining these works more fully in a review.
+
+- Generic 3D Models from Videos
+
+Include BANMo, LASR, ViSER, DOVE, etc. Indicate that the instructor would like to have a subsection or a dedicated section that compares and summarizes how these methods model general-purpose 3D objects (human bodies or other objects) from video and explores their differences or connections in terms of visualization, editability, etc.
+
 ## 3/25/2025
 
 ### Main Object:

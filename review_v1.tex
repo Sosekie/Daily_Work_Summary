@@ -1,0 +1,748 @@
+\documentclass[11pt]{article}
+\usepackage[paper=a4paper, margin=2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{A Review of Long-Term Dense Video Tracking and Monocular Non-Rigid Reconstruction}
+\author{Chenrui Fan}
+\date{}
+
+\maketitle
+
+
+\begin{abstract}
+Long-term dense tracking and monocular non-rigid reconstruction represent two pivotal and complementary threads in modern computer vision. The first thread addresses the challenge of continuously following every pixel across a video sequence, even in scenarios featuring severe occlusions, large deformations, and rapid appearance changes. In this context, recent advances have introduced robust optical-flow pipelines, Transformer-based joint correlation modules, and self-supervised paradigms capable of reliably maintaining point trajectories over extended temporal windows. The second thread focuses on recovering a time-varying 3D surface from a single camera view. Known collectively as \emph{monocular non-rigid reconstruction}, it encompasses both classical methods based on shape-from-template and non-rigid structure-from-motion, as well as newer neural rendering-based techniques that leverage implicit fields and physics-informed constraints. By reviewing these two domains in tandem, we highlight the growing convergence in their objectives—namely, robust spatiotemporal modeling of shape and motion—and discuss how future research may unite insights from dense tracking in the image plane with physically or geometrically grounded 3D representations.
+\end{abstract}
+
+
+\section{Long-Term Dense Tracking}
+Long-term dense tracking aims to robustly trace every pixel or arbitrary point in a video for extended temporal windows, even under large motion, severe occlusion, or sudden appearance changes. This section overviews methods from optical-flow-based strategies to self-supervised Transformer pipelines.
+
+\subsection{Optical-Flow-Centric Methods}
+\textbf{FlowTrack}~\cite{cho2024flowtrack} addresses the limitation of short-term flow-based methods by linking reliable flow segments over time and employing an error-compensation module. This hybrid mechanism mitigates drift and occlusions, attaining strong results on DAVIS.
+
+\textbf{DOT (Dense Optical Tracking)}~\cite{le2024dense} adopts an optical flow estimator trained on synthetic data, combined with a flow-chaining protocol that selects reliable correlations via a geometric accuracy and occlusion predictor. This pipeline provides robust long-term correspondences.
+
+\textbf{ProTracker}~\cite{zhang2025protracker} fuses local iterative flow with global heatmap matching in a probabilistic framework. By effectively combining per-frame flow continuity with intermittent global re-localization, it handles occlusion or re-entrance of tracked points over long sequences.
+
+\subsection{Transformer-Based and Joint Correlation Approaches}
+\textbf{CoTracker}~\cite{karaev2024cotracker} treats all tracking points jointly within a Transformer, permitting rich, inter-track attention. Such joint modeling improves consistency and reduces drift, especially when points are temporarily hidden or move out of the field of view.
+
+\textbf{NetTrack}~\cite{zheng2024nettrack} presents a net-like representation capturing fine-grained appearance signals across the target surface. Coupled with coarse bounding-box cues, the method excels at challenging scenarios featuring large-scale deformations and rigid or semi-rigid object motions.
+
+\subsection{Multi-Frame Data Fusion and Reliability Modeling}
+\textbf{Dense Trajectory Fields (DTF)}~\cite{tournadre2024dense} integrates iterative refinements of motion and appearance features across multiple frames, constructing patch-level cost volumes for holistic spatiotemporal consistency. This yields dense trajectories resistant to drift.
+
+\textbf{DELTA}~\cite{ngo2024delta} tackles dense 3D tracking by combining local/global attention at low resolution and an attention-based upsampler for final predictions. Through a coarse-to-fine strategy, it achieves efficient and accurate dense motion estimation even over extended video sequences.
+
+\textbf{MFT (Multi-Flow Tracker)}~\cite{neoral2024mft} exploits multiple flow estimations at logarithmically spaced intervals. The method fuses these flow segments using an occlusion estimation module, effectively handling extensive occlusions and high-speed displacements in long videos.
+
+\subsection{Unified Detection-Style Tracking and Self-Supervised Refinement}
+\textbf{TAPTR}~\cite{li2024taptr} and \textbf{TAPTRv2}~\cite{li2024taptrv2} recast arbitrary point tracking as a DETR-style detection task: each pixel is a query iteratively refined by a Transformer. TAPTRv2 introduces attention-based position updates to remove reliance on cost volumes, reducing complexity while enhancing precision.
+
+\textbf{BootsTAP}~\cite{doersch2024bootstap} focuses on large-scale self-supervised training for point tracking. A teacher-student paradigm leverages extensive unlabeled videos, learning consistent correspondences under synthetic transformations. The result is a model that generalizes robustly to real data.
+
+\textbf{Dino-Tracker}~\cite{tumanyan2024dino} fine-tunes features from the large pre-trained DINO model with self-supervised losses on a single test video. By adapting the generic representation to the video’s particular structure and appearance, it attains reliable long-term tracking despite occlusions and lighting changes.
+
+\subsection{ViSER: Video-Specific Surface Embeddings for Articulated 3D Reconstruction}
+\label{subsec:viser}
+\textbf{ViSER}~\cite{yang2021viser} introduces a pipeline for recovering articulated 3D shapes and dense 3D trajectories from a single, segmented monocular video without relying on multi-camera setups, strong category-specific priors, or extensive 2D keypoint annotations. Instead, ViSER capitalizes on two-frame optical flow (for local correspondences) and 2D object masks, learning \emph{video-specific surface embeddings} on a canonical mesh. These embeddings function similarly to a continuous set of keypoint descriptors defined on the mesh surface, effectively aligning pixels across distant frames in the video.
+
+\paragraph{Key Ideas.} 
+ViSER uses a coordinate-based MLP to represent the geometry and appearance of the deformable surface, coupled with a canonical mesh initialization. The learned \emph{surface embeddings} map each 2D pixel to a point on the canonical shape, capturing view-independent appearance cues. A self-supervised loss encourages consistent long-range correspondences: (1) a contrastive matching loss ensures that visually similar pixels map to the same canonical surface region, and (2) a reprojection loss ties the learned surface geometry to observed video frames, refining both shape and pose estimates.
+
+\paragraph{Advantages.} 
+Unlike methods that rely on template shapes or category priors, ViSER focuses on \emph{video-specific} cues. This design allows it to handle diverse, non-rigid subjects such as humans with loose clothing and animals (e.g., bears, elephants, horses) from standard benchmarks like DAVIS or YTVOS. The method shows that accurate long-range pixel-to-surface correspondences can yield state-of-the-art performance in challenging scenarios involving unusual poses or extensive deformation.
+
+\paragraph{Multi-Video Extension.} 
+Beyond single video inference, ViSER can fuse multiple videos of the same object category (e.g., multiple elephants) into a single canonical surface. By jointly optimizing surface embeddings across videos, it reconstructs previously occluded regions and yields more plausible global geometry. This multi-video approach significantly boosts shape completeness while preserving detail, though it remains sensitive to random initialization of network parameters.
+
+\paragraph{Limitations.} 
+ViSER relies on optical flow quality during initialization; thus, low-resolution videos or heavy motion blur can degrade final results. Training time is measured in hours for a short video, reflecting the computational cost of its end-to-end optimization. Moreover, while the lack of explicit category priors enhances generality, it also implies fewer constraints to guide the solution out of local minima.
+
+\paragraph{Discussion.} 
+ViSER demonstrates that, for monocular non-rigid reconstruction of articulated objects, harnessing dense, long-range correspondences (informed by local optical flow and global embeddings) can be sufficient to replace stronger category or template priors. Its success on human and animal videos foreshadows broader applicability in general-purpose non-rigid 3D reconstruction from unstructured, single-camera data.
+
+\subsection{BANMo: Building Animatable 3D Neural Models from Casual Videos}
+\label{subsec:banmo}
+
+\textbf{BANMo}~\cite{yang2022banmo} is a method that aims to create detailed, \emph{animatable} 3D representations of deformable objects from multiple ``casual'' RGB videos. Unlike prior work that relies on multi-camera studios, pre-defined shape templates, or pre-registered cameras, BANMo operates with unstructured, single-view data and recovers a canonical 3D model together with volumetric neural radiance fields, skinning weights, and poses in a fully differentiable pipeline.
+
+\paragraph{Core Ideas.}
+BANMo consolidates the following concepts:
+\begin{itemize}
+    \item \textbf{Volumetric Rendering}: The approach employs a neural radiance field (NeRF) for 3D geometry and appearance. This volume is iteratively updated via gradient-based optimization, rendering 2D images for matching.
+    \item \textbf{Canonical Embeddings}: A key step is registering each video frame to a canonical space using learned embedding features. By enforcing 2D-3D feature-metric consistency, BANMo effectively aligns tens of thousands of frames to a single deformable model.
+    \item \textbf{Neural Blend Skinning}: BANMo models articulated motion with a set of bones and blend-skinning weights. This strategy generalizes well to large deformations, such as animal limbs or human poses, while maintaining a continuous volumetric representation.
+\end{itemize}
+
+\paragraph{Architecture Overview.}
+BANMo learns a \emph{canonical} implicit volume that stores shape and appearance, supplemented by a skeleton-based layer of rigid transforms. For each video frame, the system estimates a global root pose and a set of per-bone transformations through a learned \textit{PoseNet} initialization step. It then refines these parameters using self-supervised objectives:
+\begin{itemize}
+    \item \textbf{Photometric and Silhouette Losses}: Encourage rendered images to match the input in color and object silhouette.
+    \item \textbf{Feature-Metric Consistency}: Leverages a pretrained DensePose-CSE model to obtain approximate 2D correspondences, enabling robust registration of frames that have significant viewpoint or temporal gaps.
+    \item \textbf{Reconstruction Losses in Canonical Space}: Act as a global regularization, helping to unify multiple videos of the same subject and reject ghost artifacts or false geometry.
+\end{itemize}
+
+\paragraph{Advantages over Prior Art.}
+Compared to single-video methods such as Nerfies~\cite{park2021nerfies} or ViSER~\cite{yang2021viser}, BANMo is adept at handling large, multi-video datasets. By combining \emph{neural blend skinning} with canonical embeddings, it can precisely register object poses across unstructured footage. Empirically, BANMo demonstrates superior 3D reconstruction on human and animal datasets (e.g., AMA swing, DAVIS cat), outperforming NeRF-based baselines that struggle with extensive articulations. BANMo can also fuse multiple videos for improved completeness, addressing occlusions or missing angles in any single video.
+
+\paragraph{Applications and Limitations.}
+BANMo’s unified representation enables \textbf{motion retargeting}: it can transfer the estimated pose from one sequence (e.g., a tiger moving) onto another subject’s geometry (e.g., a cat). Such functionality is valuable for AR/VR content creation, allowing casual users to create animatable 3D avatars from everyday footage. However, BANMo relies on pretrained DensePose-CSE for body part priors, requiring 2D keypoint annotations. The pipeline is also computationally demanding, scaling linearly with the number of input frames. Despite these constraints, BANMo opens the door to high-quality 3D modeling of deformable objects in the wild, bridging multi-video footage into a single, animatable framework.
+
+\subsection{LASSIE: Learning Articulated Shapes from Sparse Image Ensembles}
+\label{subsec:lassie}
+
+\textbf{LASSIE}~\cite{yao2022lassie} addresses the problem of reconstructing articulated 3D shapes from a small collection (about 10–30) of in-the-wild images of an animal species, without resorting to pre-defined templates or 2D/3D annotations. A key enabler is the use of dense self-supervised ViT (DINO) features to guide part discovery and silhouette refinement in a unified optimization framework.
+
+\paragraph{Core Insights.}
+\begin{itemize}
+    \item \textbf{3D Part Representation:} Instead of modeling the entire shape as one monolithic entity, LASSIE partitions the object into multiple parts (e.g., body, legs, head). Each part has simpler geometry, making the method more robust against pose variations and deformations. 
+    \item \textbf{Skeleton Prior:} A user-provided 3D skeleton defines the approximate number of parts and their connectivity. Although potentially inaccurate in length or proportion, this skeleton imparts enough topological structure for consistent articulation across the image ensemble.
+    \item \textbf{ViT Feature Consistency:} Building upon DINO’s self-supervised ViT features, LASSIE enforces consistent \emph{2D-to-3D} correspondences—both at the silhouette (foreground vs. background) and part-segmentation levels. This leverages discriminative, high-level features learned by DINO, ensuring that semantically similar 2D pixels map to coherent 3D parts.
+\end{itemize}
+
+\paragraph{Optimization Pipeline.}
+LASSIE performs a multi-stage optimization that refines camera poses, part geometry, and part segmentation simultaneously:
+\begin{itemize}
+    \item \textbf{Part-wise Shape Estimation:} A neural representation is learned to capture the 3D surface of each part in a canonical space, guided by silhouette constraints and sparse image features.
+    \item \textbf{Articulation:} The approximate skeleton provides rotational (joint) parameters for each part, enabling the method to reposition or pose the parts to match each input image.
+    \item \textbf{Feature-driven Loss Functions:} Self-supervised DINO features supply part discovery cues, imposing a semantic consistency that aligns visually similar regions across different images. This mechanism helps handle significant variations in pose, texture, and illumination.
+\end{itemize}
+
+\paragraph{Applications and Results.}
+On real-world data such as Pascal-Part and in-the-wild animal images, LASSIE yields substantially better 2D and 3D part discovery than prior approaches (e.g., SCOPS, A-CSM, or pure DINO clustering). The resulting part-based 3D model supports operations like:
+\begin{itemize}
+    \item \textbf{Part-based Manipulation:} Individual parts can be swapped, re-posed, or combined from different subjects (e.g., shape blending).
+    \item \textbf{Motion Retargeting:} By adjusting the skeleton pose parameters, the recovered 3D shape can be animated in new ways consistent with the discovered articulation.
+    \item \textbf{Texture Transfer:} Since a continuous mapping to each part is available, textures from one object (e.g., giraffe) can be transferred seamlessly onto another (e.g., zebra).
+\end{itemize}
+
+\paragraph{Limitations.}
+The reliance on a user-provided skeleton can be restrictive if the skeletal topology differs greatly from the real subject (e.g., animals with extreme limb proportions). LASSIE also struggles with highly articulated appendages (like elephant trunks) or fluffy, highly variable surfaces. Moreover, in scenarios with heavy occlusions or incomplete silhouettes, the learned DINO features may be insufficient to fully constrain camera poses and part shapes.
+
+\paragraph{Discussion.}
+By leveraging self-supervised DINO features for 2D segmentation and a coarse skeleton prior, LASSIE demonstrates the feasibility of recovering articulated 3D geometry from sparse images. Its core novelty lies in treating 3D part discovery as a self-supervised segmentation problem, bridging classical shape-from-template ideas with modern ViT-based feature extraction. This paradigm opens up new avenues for lightweight, in-the-wild animal reconstruction and semantic part-based manipulations. 
+
+\subsection{Particle Video Revisited (Harley \etal~\cite{harley2022particle})}
+\textbf{Motivation and Overview.}
+Harley \etal revisit the classic “particle video” concept, originally proposed by Sand and Teller, in order to track points throughout extended video sequences. Traditional optical flow methods generally operate on a pair of frames and do not fully leverage the rich temporal information available across entire sequences. Particle Video Revisited aims to bridge that gap by introducing a pipeline that recovers a long-horizon trajectory for each pixel (or “particle”), even through moderate occlusions and object displacements.
+
+\paragraph{Key Ideas.}
+\begin{itemize}
+\item \textbf{Independent Particle Prediction:} Each pixel is treated as a “particle” that independently tracks from frame to frame, rather than relying solely on a global, two-frame flow estimation. 
+\item \textbf{Cost Volumes and Iterative Refinement:} Harley \etal incorporate components from modern optical flow methods—such as dense cost volumes and iterative refinements—to produce more accurate and stable tracks.
+\item \textbf{Learned Appearance Updates:} Instead of a purely geometric or handcrafted matching scheme, the method learns appearance features, enabling more resilient matching even when surface textures or lighting conditions vary across time.
+\end{itemize}
+
+\paragraph{Performance and Limitations.}
+Particle Video Revisited achieves favorable results on trajectory estimation benchmarks, outperforming some existing dense flow-chaining and feature-matching methods. Nonetheless, it remains susceptible to extended occlusions if the occlusion periods exceed the learned temporal window. The authors also note that the method tracks particles independently, without explicit grouping or joint reasoning, which can be a trade-off in complex scenes with strong inter-pixel correlations.
+
+\subsection{CoTracker: It is Better to Track Together (Karaev \etal~\cite{karaev2024cotracker})}
+\textbf{Motivation and Overview.}
+Most dense tracking pipelines estimate correspondences on a point-by-point basis or chain short-range optical flows across time. CoTracker proposes to jointly track a large number of 2D points in a single Transformer-based framework. By modeling correlations across all points simultaneously, CoTracker aims to achieve more robust, coherent tracks—especially when dealing with occlusion or when targets leave the field of view for part of the video.
+
+\paragraph{Key Ideas.}
+\begin{itemize}
+\item \textbf{Joint Transformer Architecture:} Instead of processing each point independently, CoTracker inputs all points as queries within a Transformer. This enables attention-based interactions among the points, which can share motion clues.
+\item \textbf{Token Proxies for Memory Efficiency:} A pivotal design is to introduce a proxy-based token mechanism that reduces the memory overhead of naive self-attention across tens or hundreds of thousands of points, making large-scale multi-point tracking practical.
+\item \textbf{Online Algorithm with Unrolled Training:} Although CoTracker operates one short window at a time (online), it is trained with unrolled windows akin to a recurrent network. Hence, the model learns to handle occlusions and reappearances over longer horizons.
+\end{itemize}
+
+\paragraph{Results and Observations.}
+Experimentally, CoTracker substantially outperforms many trackers on standard benchmarks like TAP-Vid and DAVIS, especially for long-term tracking scenarios. Its design excels at capturing point-to-point dependencies and is significantly more robust when large parts of the scene are occluded or move out-of-frame briefly. However, it does require more computational resources and memory than simpler two-frame or single-point trackers.
+
+\subsection{CoTracker3: Simpler and Better Point Tracking by Pseudo-Labeling Real Videos (Karaev \etal~\cite{karaev2024cotracker3})}
+\textbf{Motivation and Overview.}
+CoTracker3 extends the principles of CoTracker by adopting a new training scheme and a refined model architecture. While CoTracker was originally trained primarily on synthetic data (e.g., Kubric), CoTracker3 leverages large-scale unlabeled real video in a pseudo-labeling fashion to bridge the domain gap between synthetic training and real-world deployment.
+
+\paragraph{Key Contributions.}
+\begin{itemize}
+\item \textbf{Simplified Architecture:} CoTracker3 removes or restructures some components from CoTracker to reduce complexity without sacrificing performance. 
+\item \textbf{Unsupervised Fine-Tuning on Real Videos:} A set of off-the-shelf teachers (trackers) is used to generate pseudo-ground truth for vast amounts of unlabeled video data, enabling CoTracker3 to learn from real-world motion. Notably, this training pipeline is simpler than some prior methods that used complex augmentation strategies or enormous proprietary data.
+\item \textbf{Offline \vs Online Variants:} The authors introduce two modes—an offline model that has access to the entire video at inference time, and an online model that processes frames sequentially. Both variants benefit greatly from unsupervised fine-tuning.
+\end{itemize}
+
+\paragraph{Experimental Results and Conclusions.}
+With significantly less real-data usage compared to some other large-scale trackers, CoTracker3 achieves new state-of-the-art results on TAP-Vid, Dynamic Replica, and other benchmarks, especially regarding occlusions. By distilling knowledge from multiple teacher trackers and applying self-training, CoTracker3 surpasses or matches methods trained on orders-of-magnitude more real data.
+
+\subsection{TAPTR: Tracking Any Point with Transformers as Detection (Li \etal~\cite{li2024taptr})}
+\textbf{Motivation and Paradigm Shift.}
+TAPTR reframes the Tracking-Any-Point (TAP) task through the lens of object detection, specifically inspired by the DEtection TRansformer (DETR). Rather than treat each tracking point as an isolated flow or match problem, TAPTR interprets each point as a query in a Transformer-based detection pipeline, allowing it to leverage well-studied operations like cross-attention, iterative refinement, and self-attention among queries.
+
+\paragraph{Key Elements.}
+\begin{itemize}
+\item \textbf{DETR-like Queries:} Each tracked point is allocated a query that includes both positional and content features, refined layer by layer in the Transformer. 
+\item \textbf{Temporal Self-Attention:} Queries belonging to the same point across time can exchange information via self-attention, helping maintain trajectory coherence over occlusions.
+\item \textbf{Integration with Cost Volumes:} TAPTR initially employed cost-volume modules from optical flow to provide local correlation cues, though subsequent improvements (see TAPTRv2) address some drawbacks in feature contamination.
+\end{itemize}
+
+\paragraph{Advantages and Challenges.}
+By leveraging the robust DETR pipeline, TAPTR consistently outperforms many prior approaches on TAP benchmarks, particularly in real-time or near real-time inference. However, the reliance on cost-volume computations can complicate the architecture and sometimes degrade performance if integrated sub-optimally, motivating further refinements in TAPTRv2 and beyond.
+
+\subsection{TAPTRv2: Attention-Based Position Update Improves Tracking Any Point (Li \etal~\cite{li2024taptrv2})}
+\textbf{Motivation for TAPTRv2.}
+While TAPTR’s adoption of a DETR-like structure was successful, it suffered from the “contamination” of point queries by cost-volume features, adversely affecting both visibility prediction and local correlation computations. TAPTRv2 presents a more streamlined pipeline to mitigate these issues.
+
+\paragraph{Key Improvements.}
+\begin{itemize}
+\item \textbf{Attention-Based Position Update (APU):} Instead of injecting cost-volume features directly into the query’s content vector, TAPTRv2 uses an attention mechanism to combine local search positions (akin to cost volume searching) with the query’s predicted position. This approach preserves content features from unwarranted corruption.
+\item \textbf{Key-Aware Deformable Attention:} Enhancing local searching capacity while keeping queries “clean,” leading to better visibility classification and trajectory consistency.
+\item \textbf{Inference Efficiency:} By removing the extra cost-volume pipeline, TAPTRv2 simplifies the architecture, enabling a faster inference speed alongside higher accuracy.
+\end{itemize}
+
+\paragraph{Empirical Results.}
+TAPTRv2 surpasses TAPTR by a notable margin on standard TAP datasets (e.g., DAVIS, Kinetics) and provides a more conceptually unified approach that does not rely on separate optical flow modules. This makes the pipeline more robust in long-horizon scenarios where repeated cost-volume contamination can accumulate errors.
+
+\subsection{TAPTRv3: Spatial and Temporal Context Foster Robust Tracking (Qu \etal)}
+\textbf{Motivation and Overview.}
+TAPTRv3~\cite{Qu2024taptrv3} is the latest iteration in the TAPTR series, targeting improved robustness for points that disappear or reappear after substantial occlusion or camera movement. Despite TAPTRv2’s simplifications, its short window-based self-attention design could struggle to handle very long sequences. TAPTRv3 thus enhances spatiotemporal context modeling for more consistent multi-frame tracking.
+
+\paragraph{Main Contributions.}
+\begin{itemize}
+\item \textbf{Context-aware Cross-Attention (CCA):} By introducing a local spatial context around each point, TAPTRv3 refines cross-attention queries, capturing stronger 2D cues and reducing track drift for each decoder layer.
+\item \textbf{Visibility-aware Long-Temporal Attention (VLTA):} To break away from purely RNN-like updates over short windows, TAPTRv3 enables attention over all previous frames, weighting them by predicted visibility. This addresses the so-called “feature drifting” problem that arises when occlusions are long or reappear after many frames.
+\item \textbf{Global Matching Trigger on Scene Cuts:} For videos containing abrupt scene changes, TAPTRv3 can automatically invoke a global matching step to re-anchor the tracked point in the new scene context. This mechanism effectively reestablishes tracking for severely changing backgrounds or sudden cuts.
+\end{itemize}
+
+\paragraph{Effectiveness.}
+Evaluations on diverse datasets (Kinetics, DAVIS, RGB-Stacking, RoboTAP) show that TAPTRv3 outperforms prior versions by a considerable margin, especially in long video scenarios. Compared to earlier TAPTR approaches, it better handles major occlusions and abrupt motion without relying on large-scale external data.
+
+\subsection{Tracking Everything Everywhere All at Once (Wang \etal)}
+\textbf{Motivation and Context.}
+Wang \etal~\cite{wang2023tracking} propose a test-time optimization method to generate accurate, dense, and \emph{long-range} pixel trajectories. Named \emph{OmniMotion}, it represents video motion in a quasi-3D volume and solves for a globally consistent flow field covering the entire video sequence. While prior works often either track points in a purely local manner or rely on short memory, this approach aims for full-length, dense tracking for any pixel.
+
+\paragraph{OmniMotion Representation.}
+\begin{itemize}
+\item \textbf{Quasi-3D Canonical Volume:} The video content is embedded into a canonical coordinate space with a forward and backward bijection to each video frame. This structure encourages global motion consistency and helps localize occlusions precisely.
+\item \textbf{Test-Time Optimization:} Rather than a feed-forward model, OmniMotion fits its representation to each input video via iterative gradient-based optimization. This process refines motion across frames, drastically reducing the drift common in optical flow chaining or local matching.
+\item \textbf{Local-Canonical Bijections:} Enforcing invertibility between the canonical frame and each local frame provides strong consistency constraints. This leads to robust occlusion handling and reduced duplication artifacts in scenes with complicated 3D geometry.
+\end{itemize}
+
+\paragraph{Results.}
+Wang \etal show that their approach can track complicated motion—fast-moving objects, large camera shifts, multi-object intersections—with improved accuracy and temporal smoothness. On TAP-Vid and real-world data, their method clearly outperforms chaining strategies and obtains high occlusion reliability. Nonetheless, the optimization is comparatively expensive, highlighting a key trade-off between runtime efficiency and globally consistent accuracy.
+
+
+
+\subsection{Missed Paper}
+
+\subsubsection{Cho\_2024\_CVPR?}
+
+\subsubsection{faster?}
+
+
+
+
+
+
+\subsection{Additional 3D Representation Notes}
+Although not purely dedicated to long-term dense tracking, several 3D-oriented approaches can inspire future methods. For instance, \textbf{SpatialTracker}~\cite{xiao2024spatialtracker} lifts 2D pixels to a 3D triplane representation with as-rigid-as-possible constraints, and \textbf{DrivingGaussian}~\cite{zhou2024drivinggaussian}, \textbf{DynMF}~\cite{kratimenos2024dynmf}, \textbf{Dynamic 3D Gaussians}~\cite{luiten2024dynamic}, and \textbf{Splatter a Video}~\cite{sun2024splatter} employ 3D Gaussian models for spatiotemporally consistent representations. While these works focus on tasks like view synthesis or large-scale reconstruction, their underlying 3D priors could be extended to improve or complement 2D-based long-term tracking pipelines.
+
+\section{Monocular Non-Rigid Reconstruction}
+\label{sec:monocular_nrs}
+In contrast to multi-view or purely 2D-based approaches, monocular non-rigid reconstruction endeavors to recover time-varying 3D shapes from a \emph{single} camera view. This section surveys principal lines of work in the field.
+
+\subsection{Shape from Template (SfT)}
+\label{subsec:sft}
+Shape-from-Template (SfT) presupposes a known 3D reference or template in a rest configuration, estimating how the template deforms to match new monocular observations. Early works incorporate differential geometry and inextensibility constraints~\cite{bartoli2015shape, yu2015direct}, while later approaches leverage physics-based simulation~\cite{kairanda2022f} to handle realistic cloth and other nonlinear materials.
+
+\subsection{Non-Rigid Structure-from-Motion (NRSfM)}
+\label{subsec:nrsfm}
+Non-Rigid Structure-from-Motion tracks multiple 2D points across frames to reconstruct deforming surfaces. Classical methods rely on low-rank shape assumptions~\cite{bregler2000recovering, dai2014simple}, whereas neural variants~\cite{sidhu2020neural} employ multi-layer perceptrons to encode shape priors. These improvements yield more expressive and detailed reconstructions than linear subspace models, yet still face challenges with large deformations or textureless regions.
+
+\subsection{Neural Rendering-based Methods}
+\label{subsec:neural_dyn}
+Neural rendering, particularly Neural Radiance Fields (NeRF), has catalyzed novel approaches to non-rigid monocular reconstruction. Methods such as NR-NeRF~\cite{tretschk2021non} or Nerfies~\cite{park2021nerfies} represent appearance and geometry in a dynamic fashion, warping each observation into a canonical domain. They can offer photorealistic re-renderings but often struggle with high-fidelity, time-coherent surface extractions.
+
+\subsection{Monocular Human Performance Capture}
+\label{subsec:humans}
+Reconstructing full human bodies from a single camera is essential for applications like AR/VR or character animation. Template-free models, e.g., PIFu/PIFuHD~\cite{saito2019pifu, saito2020pifuhd}, learn pixel-aligned implicit functions, while methods like ARCH~\cite{he2021arch++} or parametric body models (SMPL, SMPL-X~\cite{loper2023smpl, pavlakos2019expressive}) rely on global shape priors. These approaches can be refined with per-vertex offsets~\cite{xiang2020monoclothcap} or integrated into neural fields. Subject-specific templates further boost precision through silhouette constraints and local rigidity priors~\cite{habermann2019livecap, habermann2020deepcap}.
+
+\subsection{Hands, Faces, and Animals}
+\label{subsec:other_objects}
+\paragraph{Hands.}
+Articulated objects like hands require specialized modeling due to frequent self-occlusion and dexterous poses. MANO~\cite{romero2022embodied} offers a low-dimensional hand prior, enabling methods like HTML~\cite{qian2020html} to track both shape and texture. Some pipelines handle multi-hand interactions or manipulations by advanced occlusion-aware strategies~\cite{corona2022lisa}.
+
+\paragraph{Faces.}
+Facial reconstruction extends from classic 3D Morphable Models to neural detail extraction, providing highly detailed dynamic faces. Nevertheless, large expression changes and partial occlusions remain challenges for time-coherent surface recovery.
+
+\paragraph{Animals.}
+Animal reconstruction is complicated by diverse body shapes and limited ground-truth data. SMAL~\cite{zuffi20173d} or similar parametric rigs can approximate quadrupeds~\cite{zuffi2018lions}, while advanced learning-based methods integrate sparse keypoints or segmentation to infer shape. Fine-grained geometry (e.g., fur details) is still nontrivial.
+
+\paragraph{Human.}
+\textbf{HumanSplat}~\cite{pan2024humansplat} tackles single-image 3D human reconstruction using Gaussian splatting. The method learns to predict 3D splats from just one image in a generalizable manner, integrating geometric and semantic features through a latent reconstruction Transformer. A hierarchical loss function further leverages human structure priors to achieve high-fidelity texturing and novel-view synthesis. Experiments on both standard benchmarks and in-the-wild images demonstrate superior photorealism over prior approaches, indicating that bridging Gaussian-based representations and semantic constraints can greatly enhance single-view human capture.
+
+\subsection{Event Camera and Physics-based Methods}
+\label{subsec:event_physics}
+\paragraph{Event Cameras.}
+High-speed, asynchronous event cameras capture intensity changes at microsecond resolution, beneficial for rapidly moving non-rigid surfaces~\cite{xu2020eventcap, zou2021eventhpe}. Nonetheless, the data representation and noise characteristics of event streams require specialized reconstructions.
+
+\paragraph{Physics-based Reconstruction.}
+Incorporating physical models, such as elasticity and collision constraints, has proved promising for realistic monocular non-rigid reconstruction~\cite{malti2017elastic, ozgur2017particle, kairanda2022f}. Although physically correct solutions can yield accurate cloth or soft tissue deformations, computational cost and unknown material parameters pose difficulties.
+
+
+\section{Generic 3D Models from Videos}
+\label{sec:generic_3d_models}
+
+In addition to 2D-based long-term point tracking, an important thread of research focuses on constructing or inferring \emph{generic} 3D object models from monocular videos. These approaches can go beyond tracking to enable novel view synthesis, 3D reconstruction, shape manipulation, and animation of objects not limited to specific object categories or pre-existing templates. Below, we discuss several representative methods for learning such deformable 3D models directly from casually captured videos or minimally supervised data.
+
+\subsection{LASR: Learning Articulated Shape Reconstruction from a Monocular Video~\cite{yang2021lasr}}
+\textbf{Motivation and Scope.} 
+LASR addresses articulated 3D shape reconstruction of \emph{new} objects from single monocular videos, without relying on category-specific models (e.g., SMPL for humans or SMAL for animals). The authors observe that prior approaches often assume strong priors (template shapes, 3D scans, or keypoint annotations) that are unavailable for many categories in the wild. 
+
+\paragraph{Key Ingredients.}
+\begin{itemize}
+    \item \textbf{Template-Free Optimization:} LASR adopts an analysis-by-synthesis framework, iteratively matching forward-rendered silhouettes, optical flow, and appearance to the actual video observations. Instead of a parametric body model, it uses a general mesh and a linear blend skinning approach.
+    \item \textbf{Rigidity and Motion Priors:} While it does not employ a global template for shape categories, LASR incorporates local shape constraints, a coarse-to-fine re-meshing approach, and an articulated motion representation (bones + blend skinning). This set of priors constrains the solution space so that physically implausible deformations are penalized.
+    \item \textbf{Self-Supervision via Silhouettes and Flow:} LASR depends on automatically segmented object masks (e.g., from an off-the-shelf method) and optical flow estimates to drive the reconstruction, aligning 2D cues with the evolving 3D model.
+\end{itemize}
+
+\paragraph{Results and Observations.}
+LASR demonstrates promising reconstructions for challenging sequences, including animals such as dogs, horses, camels, and certain classes of human performers with nontrivial costumes (e.g., ribbons). It excels at capturing instance-specific details (e.g., the humps of a camel). However, the optimization is computationally intensive (hours for a short sequence) and can fail if the object is heavily occluded or unsegmented. Nonetheless, its success without category templates illustrates the feasibility of generalizable monocular 3D reconstruction from videos.
+
+\subsection{BANMo: Building Animatable 3D Neural Models from Casual Videos}
+\label{subsec:banmo}
+\textbf{Motivation and Overview.}
+BANMo proposes to learn \emph{animatable}, high-fidelity 3D object models from unstructured videos by integrating neural radiance fields (NeRF) with classic kinematic modeling. In contrast to short video or multi-view constraints, BANMo aims to fuse many casual or partially overlapping videos of the same subject over time, bridging large motion displacements.
+
+\paragraph{Core Components.}
+\begin{itemize}
+    \item \textbf{Global Canonical Embedding and Per-Frame Poses:} BANMo uses a canonical 3D volume combined with an articulated bone/rig structure (blend-skinning) to warp the canonical model into each video frame. This allows large articulations (e.g., for animals or humans) and consistently merges multi-video data.
+    \item \textbf{Neural Radiance Fields with Feature-Metric Constraints:} BANMo uses volumetric rendering – learned via photometric and silhouette losses – along with “correspondence embeddings” from a pretrained DensePose-CSE or similar model to align frames. This combination ensures that color and semantics unify across widely varying frames.
+    \item \textbf{Category-Agnostic Pipeline:} Although BANMo can exploit shape cues from certain pretrained feature embeddings (e.g., DensePose for humans), its kinematic rig is not strictly category-specific, making it more generalizable to new objects.
+\end{itemize}
+
+\paragraph{Applications and Results.}
+BANMo shows improved geometry and motion reconstructions on both synthetic and real videos compared to single-view or short-frame approaches. The learned skeleton allows retargeting of motion, meaning the model can re-animate a subject using pose sequences from another video. Its multi-video synergy leads to higher-fidelity geometry, but it relies on a suitable feature embedding (DensePose for humans, etc.) and demands significant GPU time for multi-video optimization.
+
+\subsection{ViSER: Video-Specific Surface Embeddings for Articulated 3D Shape~\cite{yang2021viser}}
+\textbf{Motivation and Overview.}
+ViSER focuses on reconstructing and tracking deformable or articulated objects from a single segmented video, without the necessity of multi-camera setups or strong category priors (like parametric body models). The key insight is to formulate a \emph{video-specific} set of learned surface embeddings that serve as continuous descriptors over the canonical object surface.
+
+\paragraph{Technical Highlights.}
+\begin{itemize}
+    \item \textbf{Video-Specific Embeddings as Continuous Keypoints:} Each 3D point on the canonical mesh is assigned a learned descriptor. During training, 2D pixels are matched to these descriptors, enabling the method to infer correspondences across long time ranges.
+    \item \textbf{Coordinate-Based MLP and Self-Supervision:} By combining flow and silhouette cues with a minimal set of global shape constraints, ViSER iteratively refines a canonical mesh and per-frame transformations. The method is robust to unusual poses or extended occlusions, as the embeddings can track long-range correspondences.
+    \item \textbf{Single \vs Multi-Video Extension:} While ViSER is originally designed for single-video optimization, it can be extended to fuse multiple videos of the same category, leading to more complete reconstruction of occluded or unseen parts (e.g., the hind legs of an elephant).
+\end{itemize}
+
+\paragraph{Comparison and Constraints.}
+ViSER is an analysis-by-synthesis framework like LASR but relies heavily on a learned 2D-3D embedding (rather than a parametric bone/rig prior). It can outperform or complement template-based methods when the object deviates significantly from any known shape. However, convergence can be sensitive to optical flow quality and random initialization, and training can require hours per sequence.
+
+\subsection{DOVE: Learning Deformable 3D Objects by Watching Videos~\cite{wu2023dove}}
+\textbf{Motivation and Scope.}
+DOVE explores an \emph{unsupervised} route to learn 3D deformable object categories from large collections of videos. The approach dispenses with explicit keypoint supervision, viewpoint annotations, or template shapes—only leveraging external object segmentation or bounding boxes. The end goal is a category-level 3D model that can reconstruct new instances (from the same category) in a single image, capturing both shape and articulation.
+
+\paragraph{Core Contributions.}
+\begin{itemize}
+    \item \textbf{Category Shape Prior:} While DOVE does not rely on template-based shapes (like SMPL/SMAL), it does learn a category-level prior by training on multiple videos of the same class, improving consistency over single-video methods.
+    \item \textbf{Symmetry and Bone Structures:} Like other methods, DOVE imposes shape symmetry constraints for objects such as birds or quadrupeds, plus a user-provided skeleton definition (e.g., for wings or legs). This helps factor out articulation from overall shape.
+    \item \textbf{Joint Pose, Shape, and Texture Inference:} Each training video is explained by an underlying canonical shape, an articulated transformation, and an appearance field. Repeated exposures to the same class yields a more stable category prior.
+\end{itemize}
+
+\paragraph{Empirical Analysis.}
+DOVE shows improved viewpoint coverage and shape consistency versus purely single-instance methods (e.g., LASR or single-video setups). It also outperforms prior approaches that lack skeleton priors on certain animals. However, it requires well-segmented training data and a consistent articulation topology, making it less flexible for non-rigid or topologically diverse classes.
+
+\subsection{Discussion and Comparisons}
+\textbf{Visual Fidelity vs. Generality.}
+- \emph{Single-Video Approaches (LASR, ViSER)} typically excel at modeling instance-specific detail and do not require large category-level datasets. However, they can struggle with heavy occlusions or segmentations and often need lengthy test-time optimization.
+- \emph{Category-Level Approaches (DOVE, BANMo in multi-video settings)} can better handle missing views or heavily deformed poses by pooling information across many videos. Yet, they often require consistent skeleton assumptions or pretrained embeddings (e.g., DensePose), which are somewhat category-limited.
+
+\textbf{Reconstruction vs. Editability.}
+- Most methods (LASR, ViSER, BANMo) provide an articulated or deformable mesh that can be re-posed, though the complexity of rigs or MLP embeddings can vary. DOVE similarly yields an animatable mesh with discovered articulation.
+- In practice, the ease of editing (e.g., retargeting motions, changing texture) depends on whether the approach yields an explicit mesh with meaningful skinning weights (LASR, BANMo) or a neural implicit volume. Hybrid solutions (BANMo’s radiance fields plus an articulated skeleton) can be more powerful for photorealistic rendering but are somewhat less direct to manipulate in 3D content creation pipelines.
+
+\textbf{Open Challenges.}
+- \emph{Temporal efficiency:} Many methods require hours of test-time optimization (LASR, ViSER), limiting real-world applicability.
+- \emph{Occlusions and viewpoint diversity:} All methods rely on either reliable silhouettes, multiview coverage, or approximate shape priors. Heavy occlusions and limited viewpoint changes remain problematic.
+- \emph{Extension beyond single objects:} Incorporating scenes with multiple, possibly interacting objects is still relatively underexplored.
+
+Overall, these approaches reveal how leveraging optical flow, silhouettes, or local 2D correspondences can push monocular 3D reconstruction closer to real, in-the-wild settings, bridging the gap between simplistic single-frame assumptions and the richly structured motion cues in casually captured videos.
+\documentclass[11pt]{article}
+\usepackage[paper=a4paper, margin=2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{A Review of Long-Term Dense Video Tracking and Monocular Non-Rigid Reconstruction}
+\author{Chenrui Fan}
+\date{}
+
+\maketitle
+
+
+\begin{abstract}
+Long-term dense tracking and monocular non-rigid reconstruction represent two pivotal and complementary threads in modern computer vision. The first thread addresses the challenge of continuously following every pixel across a video sequence, even in scenarios featuring severe occlusions, large deformations, and rapid appearance changes. In this context, recent advances have introduced robust optical-flow pipelines, Transformer-based joint correlation modules, and self-supervised paradigms capable of reliably maintaining point trajectories over extended temporal windows. The second thread focuses on recovering a time-varying 3D surface from a single camera view. Known collectively as \emph{monocular non-rigid reconstruction}, it encompasses both classical methods based on shape-from-template and non-rigid structure-from-motion, as well as newer neural rendering-based techniques that leverage implicit fields and physics-informed constraints. By reviewing these two domains in tandem, we highlight the growing convergence in their objectives—namely, robust spatiotemporal modeling of shape and motion—and discuss how future research may unite insights from dense tracking in the image plane with physically or geometrically grounded 3D representations.
+\end{abstract}
+
+
+\section{Long-Term Dense Tracking}
+Long-term dense tracking aims to robustly trace every pixel or arbitrary point in a video for extended temporal windows, even under large motion, severe occlusion, or sudden appearance changes. This section overviews methods from optical-flow-based strategies to self-supervised Transformer pipelines.
+
+\subsection{Optical-Flow-Centric Methods}
+\textbf{FlowTrack}~\cite{cho2024flowtrack} addresses the limitation of short-term flow-based methods by linking reliable flow segments over time and employing an error-compensation module. This hybrid mechanism mitigates drift and occlusions, attaining strong results on DAVIS.
+
+\textbf{DOT (Dense Optical Tracking)}~\cite{le2024dense} adopts an optical flow estimator trained on synthetic data, combined with a flow-chaining protocol that selects reliable correlations via a geometric accuracy and occlusion predictor. This pipeline provides robust long-term correspondences.
+
+\textbf{ProTracker}~\cite{zhang2025protracker} fuses local iterative flow with global heatmap matching in a probabilistic framework. By effectively combining per-frame flow continuity with intermittent global re-localization, it handles occlusion or re-entrance of tracked points over long sequences.
+
+\subsection{Transformer-Based and Joint Correlation Approaches}
+\textbf{CoTracker}~\cite{karaev2024cotracker} treats all tracking points jointly within a Transformer, permitting rich, inter-track attention. Such joint modeling improves consistency and reduces drift, especially when points are temporarily hidden or move out of the field of view.
+
+\textbf{NetTrack}~\cite{zheng2024nettrack} presents a net-like representation capturing fine-grained appearance signals across the target surface. Coupled with coarse bounding-box cues, the method excels at challenging scenarios featuring large-scale deformations and rigid or semi-rigid object motions.
+
+\subsection{Multi-Frame Data Fusion and Reliability Modeling}
+\textbf{Dense Trajectory Fields (DTF)}~\cite{tournadre2024dense} integrates iterative refinements of motion and appearance features across multiple frames, constructing patch-level cost volumes for holistic spatiotemporal consistency. This yields dense trajectories resistant to drift.
+
+\textbf{DELTA}~\cite{ngo2024delta} tackles dense 3D tracking by combining local/global attention at low resolution and an attention-based upsampler for final predictions. Through a coarse-to-fine strategy, it achieves efficient and accurate dense motion estimation even over extended video sequences.
+
+\textbf{MFT (Multi-Flow Tracker)}~\cite{neoral2024mft} exploits multiple flow estimations at logarithmically spaced intervals. The method fuses these flow segments using an occlusion estimation module, effectively handling extensive occlusions and high-speed displacements in long videos.
+
+\subsection{Unified Detection-Style Tracking and Self-Supervised Refinement}
+\textbf{TAPTR}~\cite{li2024taptr} and \textbf{TAPTRv2}~\cite{li2024taptrv2} recast arbitrary point tracking as a DETR-style detection task: each pixel is a query iteratively refined by a Transformer. TAPTRv2 introduces attention-based position updates to remove reliance on cost volumes, reducing complexity while enhancing precision.
+
+\textbf{BootsTAP}~\cite{doersch2024bootstap} focuses on large-scale self-supervised training for point tracking. A teacher-student paradigm leverages extensive unlabeled videos, learning consistent correspondences under synthetic transformations. The result is a model that generalizes robustly to real data.
+
+\textbf{Dino-Tracker}~\cite{tumanyan2024dino} fine-tunes features from the large pre-trained DINO model with self-supervised losses on a single test video. By adapting the generic representation to the video’s particular structure and appearance, it attains reliable long-term tracking despite occlusions and lighting changes.
+
+\subsection{ViSER: Video-Specific Surface Embeddings for Articulated 3D Reconstruction}
+\label{subsec:viser}
+\textbf{ViSER}~\cite{yang2021viser} introduces a pipeline for recovering articulated 3D shapes and dense 3D trajectories from a single, segmented monocular video without relying on multi-camera setups, strong category-specific priors, or extensive 2D keypoint annotations. Instead, ViSER capitalizes on two-frame optical flow (for local correspondences) and 2D object masks, learning \emph{video-specific surface embeddings} on a canonical mesh. These embeddings function similarly to a continuous set of keypoint descriptors defined on the mesh surface, effectively aligning pixels across distant frames in the video.
+
+\paragraph{Key Ideas.} 
+ViSER uses a coordinate-based MLP to represent the geometry and appearance of the deformable surface, coupled with a canonical mesh initialization. The learned \emph{surface embeddings} map each 2D pixel to a point on the canonical shape, capturing view-independent appearance cues. A self-supervised loss encourages consistent long-range correspondences: (1) a contrastive matching loss ensures that visually similar pixels map to the same canonical surface region, and (2) a reprojection loss ties the learned surface geometry to observed video frames, refining both shape and pose estimates.
+
+\paragraph{Advantages.} 
+Unlike methods that rely on template shapes or category priors, ViSER focuses on \emph{video-specific} cues. This design allows it to handle diverse, non-rigid subjects such as humans with loose clothing and animals (e.g., bears, elephants, horses) from standard benchmarks like DAVIS or YTVOS. The method shows that accurate long-range pixel-to-surface correspondences can yield state-of-the-art performance in challenging scenarios involving unusual poses or extensive deformation.
+
+\paragraph{Multi-Video Extension.} 
+Beyond single video inference, ViSER can fuse multiple videos of the same object category (e.g., multiple elephants) into a single canonical surface. By jointly optimizing surface embeddings across videos, it reconstructs previously occluded regions and yields more plausible global geometry. This multi-video approach significantly boosts shape completeness while preserving detail, though it remains sensitive to random initialization of network parameters.
+
+\paragraph{Limitations.} 
+ViSER relies on optical flow quality during initialization; thus, low-resolution videos or heavy motion blur can degrade final results. Training time is measured in hours for a short video, reflecting the computational cost of its end-to-end optimization. Moreover, while the lack of explicit category priors enhances generality, it also implies fewer constraints to guide the solution out of local minima.
+
+\paragraph{Discussion.} 
+ViSER demonstrates that, for monocular non-rigid reconstruction of articulated objects, harnessing dense, long-range correspondences (informed by local optical flow and global embeddings) can be sufficient to replace stronger category or template priors. Its success on human and animal videos foreshadows broader applicability in general-purpose non-rigid 3D reconstruction from unstructured, single-camera data.
+
+\subsection{BANMo: Building Animatable 3D Neural Models from Casual Videos}
+\label{subsec:banmo}
+
+\textbf{BANMo}~\cite{yang2022banmo} is a method that aims to create detailed, \emph{animatable} 3D representations of deformable objects from multiple ``casual'' RGB videos. Unlike prior work that relies on multi-camera studios, pre-defined shape templates, or pre-registered cameras, BANMo operates with unstructured, single-view data and recovers a canonical 3D model together with volumetric neural radiance fields, skinning weights, and poses in a fully differentiable pipeline.
+
+\paragraph{Core Ideas.}
+BANMo consolidates the following concepts:
+\begin{itemize}
+    \item \textbf{Volumetric Rendering}: The approach employs a neural radiance field (NeRF) for 3D geometry and appearance. This volume is iteratively updated via gradient-based optimization, rendering 2D images for matching.
+    \item \textbf{Canonical Embeddings}: A key step is registering each video frame to a canonical space using learned embedding features. By enforcing 2D-3D feature-metric consistency, BANMo effectively aligns tens of thousands of frames to a single deformable model.
+    \item \textbf{Neural Blend Skinning}: BANMo models articulated motion with a set of bones and blend-skinning weights. This strategy generalizes well to large deformations, such as animal limbs or human poses, while maintaining a continuous volumetric representation.
+\end{itemize}
+
+\paragraph{Architecture Overview.}
+BANMo learns a \emph{canonical} implicit volume that stores shape and appearance, supplemented by a skeleton-based layer of rigid transforms. For each video frame, the system estimates a global root pose and a set of per-bone transformations through a learned \textit{PoseNet} initialization step. It then refines these parameters using self-supervised objectives:
+\begin{itemize}
+    \item \textbf{Photometric and Silhouette Losses}: Encourage rendered images to match the input in color and object silhouette.
+    \item \textbf{Feature-Metric Consistency}: Leverages a pretrained DensePose-CSE model to obtain approximate 2D correspondences, enabling robust registration of frames that have significant viewpoint or temporal gaps.
+    \item \textbf{Reconstruction Losses in Canonical Space}: Act as a global regularization, helping to unify multiple videos of the same subject and reject ghost artifacts or false geometry.
+\end{itemize}
+
+\paragraph{Advantages over Prior Art.}
+Compared to single-video methods such as Nerfies~\cite{park2021nerfies} or ViSER~\cite{yang2021viser}, BANMo is adept at handling large, multi-video datasets. By combining \emph{neural blend skinning} with canonical embeddings, it can precisely register object poses across unstructured footage. Empirically, BANMo demonstrates superior 3D reconstruction on human and animal datasets (e.g., AMA swing, DAVIS cat), outperforming NeRF-based baselines that struggle with extensive articulations. BANMo can also fuse multiple videos for improved completeness, addressing occlusions or missing angles in any single video.
+
+\paragraph{Applications and Limitations.}
+BANMo’s unified representation enables \textbf{motion retargeting}: it can transfer the estimated pose from one sequence (e.g., a tiger moving) onto another subject’s geometry (e.g., a cat). Such functionality is valuable for AR/VR content creation, allowing casual users to create animatable 3D avatars from everyday footage. However, BANMo relies on pretrained DensePose-CSE for body part priors, requiring 2D keypoint annotations. The pipeline is also computationally demanding, scaling linearly with the number of input frames. Despite these constraints, BANMo opens the door to high-quality 3D modeling of deformable objects in the wild, bridging multi-video footage into a single, animatable framework.
+
+\subsection{LASSIE: Learning Articulated Shapes from Sparse Image Ensembles}
+\label{subsec:lassie}
+
+\textbf{LASSIE}~\cite{yao2022lassie} addresses the problem of reconstructing articulated 3D shapes from a small collection (about 10–30) of in-the-wild images of an animal species, without resorting to pre-defined templates or 2D/3D annotations. A key enabler is the use of dense self-supervised ViT (DINO) features to guide part discovery and silhouette refinement in a unified optimization framework.
+
+\paragraph{Core Insights.}
+\begin{itemize}
+    \item \textbf{3D Part Representation:} Instead of modeling the entire shape as one monolithic entity, LASSIE partitions the object into multiple parts (e.g., body, legs, head). Each part has simpler geometry, making the method more robust against pose variations and deformations. 
+    \item \textbf{Skeleton Prior:} A user-provided 3D skeleton defines the approximate number of parts and their connectivity. Although potentially inaccurate in length or proportion, this skeleton imparts enough topological structure for consistent articulation across the image ensemble.
+    \item \textbf{ViT Feature Consistency:} Building upon DINO’s self-supervised ViT features, LASSIE enforces consistent \emph{2D-to-3D} correspondences—both at the silhouette (foreground vs. background) and part-segmentation levels. This leverages discriminative, high-level features learned by DINO, ensuring that semantically similar 2D pixels map to coherent 3D parts.
+\end{itemize}
+
+\paragraph{Optimization Pipeline.}
+LASSIE performs a multi-stage optimization that refines camera poses, part geometry, and part segmentation simultaneously:
+\begin{itemize}
+    \item \textbf{Part-wise Shape Estimation:} A neural representation is learned to capture the 3D surface of each part in a canonical space, guided by silhouette constraints and sparse image features.
+    \item \textbf{Articulation:} The approximate skeleton provides rotational (joint) parameters for each part, enabling the method to reposition or pose the parts to match each input image.
+    \item \textbf{Feature-driven Loss Functions:} Self-supervised DINO features supply part discovery cues, imposing a semantic consistency that aligns visually similar regions across different images. This mechanism helps handle significant variations in pose, texture, and illumination.
+\end{itemize}
+
+\paragraph{Applications and Results.}
+On real-world data such as Pascal-Part and in-the-wild animal images, LASSIE yields substantially better 2D and 3D part discovery than prior approaches (e.g., SCOPS, A-CSM, or pure DINO clustering). The resulting part-based 3D model supports operations like:
+\begin{itemize}
+    \item \textbf{Part-based Manipulation:} Individual parts can be swapped, re-posed, or combined from different subjects (e.g., shape blending).
+    \item \textbf{Motion Retargeting:} By adjusting the skeleton pose parameters, the recovered 3D shape can be animated in new ways consistent with the discovered articulation.
+    \item \textbf{Texture Transfer:} Since a continuous mapping to each part is available, textures from one object (e.g., giraffe) can be transferred seamlessly onto another (e.g., zebra).
+\end{itemize}
+
+\paragraph{Limitations.}
+The reliance on a user-provided skeleton can be restrictive if the skeletal topology differs greatly from the real subject (e.g., animals with extreme limb proportions). LASSIE also struggles with highly articulated appendages (like elephant trunks) or fluffy, highly variable surfaces. Moreover, in scenarios with heavy occlusions or incomplete silhouettes, the learned DINO features may be insufficient to fully constrain camera poses and part shapes.
+
+\paragraph{Discussion.}
+By leveraging self-supervised DINO features for 2D segmentation and a coarse skeleton prior, LASSIE demonstrates the feasibility of recovering articulated 3D geometry from sparse images. Its core novelty lies in treating 3D part discovery as a self-supervised segmentation problem, bridging classical shape-from-template ideas with modern ViT-based feature extraction. This paradigm opens up new avenues for lightweight, in-the-wild animal reconstruction and semantic part-based manipulations. 
+
+\subsection{Particle Video Revisited (Harley \etal~\cite{harley2022particle})}
+\textbf{Motivation and Overview.}
+Harley \etal revisit the classic “particle video” concept, originally proposed by Sand and Teller, in order to track points throughout extended video sequences. Traditional optical flow methods generally operate on a pair of frames and do not fully leverage the rich temporal information available across entire sequences. Particle Video Revisited aims to bridge that gap by introducing a pipeline that recovers a long-horizon trajectory for each pixel (or “particle”), even through moderate occlusions and object displacements.
+
+\paragraph{Key Ideas.}
+\begin{itemize}
+\item \textbf{Independent Particle Prediction:} Each pixel is treated as a “particle” that independently tracks from frame to frame, rather than relying solely on a global, two-frame flow estimation. 
+\item \textbf{Cost Volumes and Iterative Refinement:} Harley \etal incorporate components from modern optical flow methods—such as dense cost volumes and iterative refinements—to produce more accurate and stable tracks.
+\item \textbf{Learned Appearance Updates:} Instead of a purely geometric or handcrafted matching scheme, the method learns appearance features, enabling more resilient matching even when surface textures or lighting conditions vary across time.
+\end{itemize}
+
+\paragraph{Performance and Limitations.}
+Particle Video Revisited achieves favorable results on trajectory estimation benchmarks, outperforming some existing dense flow-chaining and feature-matching methods. Nonetheless, it remains susceptible to extended occlusions if the occlusion periods exceed the learned temporal window. The authors also note that the method tracks particles independently, without explicit grouping or joint reasoning, which can be a trade-off in complex scenes with strong inter-pixel correlations.
+
+\subsection{CoTracker: It is Better to Track Together (Karaev \etal~\cite{karaev2024cotracker})}
+\textbf{Motivation and Overview.}
+Most dense tracking pipelines estimate correspondences on a point-by-point basis or chain short-range optical flows across time. CoTracker proposes to jointly track a large number of 2D points in a single Transformer-based framework. By modeling correlations across all points simultaneously, CoTracker aims to achieve more robust, coherent tracks—especially when dealing with occlusion or when targets leave the field of view for part of the video.
+
+\paragraph{Key Ideas.}
+\begin{itemize}
+\item \textbf{Joint Transformer Architecture:} Instead of processing each point independently, CoTracker inputs all points as queries within a Transformer. This enables attention-based interactions among the points, which can share motion clues.
+\item \textbf{Token Proxies for Memory Efficiency:} A pivotal design is to introduce a proxy-based token mechanism that reduces the memory overhead of naive self-attention across tens or hundreds of thousands of points, making large-scale multi-point tracking practical.
+\item \textbf{Online Algorithm with Unrolled Training:} Although CoTracker operates one short window at a time (online), it is trained with unrolled windows akin to a recurrent network. Hence, the model learns to handle occlusions and reappearances over longer horizons.
+\end{itemize}
+
+\paragraph{Results and Observations.}
+Experimentally, CoTracker substantially outperforms many trackers on standard benchmarks like TAP-Vid and DAVIS, especially for long-term tracking scenarios. Its design excels at capturing point-to-point dependencies and is significantly more robust when large parts of the scene are occluded or move out-of-frame briefly. However, it does require more computational resources and memory than simpler two-frame or single-point trackers.
+
+\subsection{CoTracker3: Simpler and Better Point Tracking by Pseudo-Labeling Real Videos (Karaev \etal~\cite{karaev2024cotracker3})}
+\textbf{Motivation and Overview.}
+CoTracker3 extends the principles of CoTracker by adopting a new training scheme and a refined model architecture. While CoTracker was originally trained primarily on synthetic data (e.g., Kubric), CoTracker3 leverages large-scale unlabeled real video in a pseudo-labeling fashion to bridge the domain gap between synthetic training and real-world deployment.
+
+\paragraph{Key Contributions.}
+\begin{itemize}
+\item \textbf{Simplified Architecture:} CoTracker3 removes or restructures some components from CoTracker to reduce complexity without sacrificing performance. 
+\item \textbf{Unsupervised Fine-Tuning on Real Videos:} A set of off-the-shelf teachers (trackers) is used to generate pseudo-ground truth for vast amounts of unlabeled video data, enabling CoTracker3 to learn from real-world motion. Notably, this training pipeline is simpler than some prior methods that used complex augmentation strategies or enormous proprietary data.
+\item \textbf{Offline \vs Online Variants:} The authors introduce two modes—an offline model that has access to the entire video at inference time, and an online model that processes frames sequentially. Both variants benefit greatly from unsupervised fine-tuning.
+\end{itemize}
+
+\paragraph{Experimental Results and Conclusions.}
+With significantly less real-data usage compared to some other large-scale trackers, CoTracker3 achieves new state-of-the-art results on TAP-Vid, Dynamic Replica, and other benchmarks, especially regarding occlusions. By distilling knowledge from multiple teacher trackers and applying self-training, CoTracker3 surpasses or matches methods trained on orders-of-magnitude more real data.
+
+\subsection{TAPTR: Tracking Any Point with Transformers as Detection (Li \etal~\cite{li2024taptr})}
+\textbf{Motivation and Paradigm Shift.}
+TAPTR reframes the Tracking-Any-Point (TAP) task through the lens of object detection, specifically inspired by the DEtection TRansformer (DETR). Rather than treat each tracking point as an isolated flow or match problem, TAPTR interprets each point as a query in a Transformer-based detection pipeline, allowing it to leverage well-studied operations like cross-attention, iterative refinement, and self-attention among queries.
+
+\paragraph{Key Elements.}
+\begin{itemize}
+\item \textbf{DETR-like Queries:} Each tracked point is allocated a query that includes both positional and content features, refined layer by layer in the Transformer. 
+\item \textbf{Temporal Self-Attention:} Queries belonging to the same point across time can exchange information via self-attention, helping maintain trajectory coherence over occlusions.
+\item \textbf{Integration with Cost Volumes:} TAPTR initially employed cost-volume modules from optical flow to provide local correlation cues, though subsequent improvements (see TAPTRv2) address some drawbacks in feature contamination.
+\end{itemize}
+
+\paragraph{Advantages and Challenges.}
+By leveraging the robust DETR pipeline, TAPTR consistently outperforms many prior approaches on TAP benchmarks, particularly in real-time or near real-time inference. However, the reliance on cost-volume computations can complicate the architecture and sometimes degrade performance if integrated sub-optimally, motivating further refinements in TAPTRv2 and beyond.
+
+\subsection{TAPTRv2: Attention-Based Position Update Improves Tracking Any Point (Li \etal~\cite{li2024taptrv2})}
+\textbf{Motivation for TAPTRv2.}
+While TAPTR’s adoption of a DETR-like structure was successful, it suffered from the “contamination” of point queries by cost-volume features, adversely affecting both visibility prediction and local correlation computations. TAPTRv2 presents a more streamlined pipeline to mitigate these issues.
+
+\paragraph{Key Improvements.}
+\begin{itemize}
+\item \textbf{Attention-Based Position Update (APU):} Instead of injecting cost-volume features directly into the query’s content vector, TAPTRv2 uses an attention mechanism to combine local search positions (akin to cost volume searching) with the query’s predicted position. This approach preserves content features from unwarranted corruption.
+\item \textbf{Key-Aware Deformable Attention:} Enhancing local searching capacity while keeping queries “clean,” leading to better visibility classification and trajectory consistency.
+\item \textbf{Inference Efficiency:} By removing the extra cost-volume pipeline, TAPTRv2 simplifies the architecture, enabling a faster inference speed alongside higher accuracy.
+\end{itemize}
+
+\paragraph{Empirical Results.}
+TAPTRv2 surpasses TAPTR by a notable margin on standard TAP datasets (e.g., DAVIS, Kinetics) and provides a more conceptually unified approach that does not rely on separate optical flow modules. This makes the pipeline more robust in long-horizon scenarios where repeated cost-volume contamination can accumulate errors.
+
+\subsection{TAPTRv3: Spatial and Temporal Context Foster Robust Tracking (Qu \etal)}
+\textbf{Motivation and Overview.}
+TAPTRv3~\cite{Qu2024taptrv3} is the latest iteration in the TAPTR series, targeting improved robustness for points that disappear or reappear after substantial occlusion or camera movement. Despite TAPTRv2’s simplifications, its short window-based self-attention design could struggle to handle very long sequences. TAPTRv3 thus enhances spatiotemporal context modeling for more consistent multi-frame tracking.
+
+\paragraph{Main Contributions.}
+\begin{itemize}
+\item \textbf{Context-aware Cross-Attention (CCA):} By introducing a local spatial context around each point, TAPTRv3 refines cross-attention queries, capturing stronger 2D cues and reducing track drift for each decoder layer.
+\item \textbf{Visibility-aware Long-Temporal Attention (VLTA):} To break away from purely RNN-like updates over short windows, TAPTRv3 enables attention over all previous frames, weighting them by predicted visibility. This addresses the so-called “feature drifting” problem that arises when occlusions are long or reappear after many frames.
+\item \textbf{Global Matching Trigger on Scene Cuts:} For videos containing abrupt scene changes, TAPTRv3 can automatically invoke a global matching step to re-anchor the tracked point in the new scene context. This mechanism effectively reestablishes tracking for severely changing backgrounds or sudden cuts.
+\end{itemize}
+
+\paragraph{Effectiveness.}
+Evaluations on diverse datasets (Kinetics, DAVIS, RGB-Stacking, RoboTAP) show that TAPTRv3 outperforms prior versions by a considerable margin, especially in long video scenarios. Compared to earlier TAPTR approaches, it better handles major occlusions and abrupt motion without relying on large-scale external data.
+
+\subsection{Tracking Everything Everywhere All at Once (Wang \etal)}
+\textbf{Motivation and Context.}
+Wang \etal~\cite{wang2023tracking} propose a test-time optimization method to generate accurate, dense, and \emph{long-range} pixel trajectories. Named \emph{OmniMotion}, it represents video motion in a quasi-3D volume and solves for a globally consistent flow field covering the entire video sequence. While prior works often either track points in a purely local manner or rely on short memory, this approach aims for full-length, dense tracking for any pixel.
+
+\paragraph{OmniMotion Representation.}
+\begin{itemize}
+\item \textbf{Quasi-3D Canonical Volume:} The video content is embedded into a canonical coordinate space with a forward and backward bijection to each video frame. This structure encourages global motion consistency and helps localize occlusions precisely.
+\item \textbf{Test-Time Optimization:} Rather than a feed-forward model, OmniMotion fits its representation to each input video via iterative gradient-based optimization. This process refines motion across frames, drastically reducing the drift common in optical flow chaining or local matching.
+\item \textbf{Local-Canonical Bijections:} Enforcing invertibility between the canonical frame and each local frame provides strong consistency constraints. This leads to robust occlusion handling and reduced duplication artifacts in scenes with complicated 3D geometry.
+\end{itemize}
+
+\paragraph{Results.}
+Wang \etal show that their approach can track complicated motion—fast-moving objects, large camera shifts, multi-object intersections—with improved accuracy and temporal smoothness. On TAP-Vid and real-world data, their method clearly outperforms chaining strategies and obtains high occlusion reliability. Nonetheless, the optimization is comparatively expensive, highlighting a key trade-off between runtime efficiency and globally consistent accuracy.
+
+
+
+\subsection{Missed Paper}
+
+\subsubsection{Cho\_2024\_CVPR?}
+
+\subsubsection{faster?}
+
+
+
+
+
+
+\subsection{Additional 3D Representation Notes}
+Although not purely dedicated to long-term dense tracking, several 3D-oriented approaches can inspire future methods. For instance, \textbf{SpatialTracker}~\cite{xiao2024spatialtracker} lifts 2D pixels to a 3D triplane representation with as-rigid-as-possible constraints, and \textbf{DrivingGaussian}~\cite{zhou2024drivinggaussian}, \textbf{DynMF}~\cite{kratimenos2024dynmf}, \textbf{Dynamic 3D Gaussians}~\cite{luiten2024dynamic}, and \textbf{Splatter a Video}~\cite{sun2024splatter} employ 3D Gaussian models for spatiotemporally consistent representations. While these works focus on tasks like view synthesis or large-scale reconstruction, their underlying 3D priors could be extended to improve or complement 2D-based long-term tracking pipelines.
+
+\section{Monocular Non-Rigid Reconstruction}
+\label{sec:monocular_nrs}
+In contrast to multi-view or purely 2D-based approaches, monocular non-rigid reconstruction endeavors to recover time-varying 3D shapes from a \emph{single} camera view. This section surveys principal lines of work in the field.
+
+\subsection{Shape from Template (SfT)}
+\label{subsec:sft}
+Shape-from-Template (SfT) presupposes a known 3D reference or template in a rest configuration, estimating how the template deforms to match new monocular observations. Early works incorporate differential geometry and inextensibility constraints~\cite{bartoli2015shape, yu2015direct}, while later approaches leverage physics-based simulation~\cite{kairanda2022f} to handle realistic cloth and other nonlinear materials.
+
+\subsection{Non-Rigid Structure-from-Motion (NRSfM)}
+\label{subsec:nrsfm}
+Non-Rigid Structure-from-Motion tracks multiple 2D points across frames to reconstruct deforming surfaces. Classical methods rely on low-rank shape assumptions~\cite{bregler2000recovering, dai2014simple}, whereas neural variants~\cite{sidhu2020neural} employ multi-layer perceptrons to encode shape priors. These improvements yield more expressive and detailed reconstructions than linear subspace models, yet still face challenges with large deformations or textureless regions.
+
+\subsection{Neural Rendering-based Methods}
+\label{subsec:neural_dyn}
+Neural rendering, particularly Neural Radiance Fields (NeRF), has catalyzed novel approaches to non-rigid monocular reconstruction. Methods such as NR-NeRF~\cite{tretschk2021non} or Nerfies~\cite{park2021nerfies} represent appearance and geometry in a dynamic fashion, warping each observation into a canonical domain. They can offer photorealistic re-renderings but often struggle with high-fidelity, time-coherent surface extractions.
+
+\subsection{Monocular Human Performance Capture}
+\label{subsec:humans}
+Reconstructing full human bodies from a single camera is essential for applications like AR/VR or character animation. Template-free models, e.g., PIFu/PIFuHD~\cite{saito2019pifu, saito2020pifuhd}, learn pixel-aligned implicit functions, while methods like ARCH~\cite{he2021arch++} or parametric body models (SMPL, SMPL-X~\cite{loper2023smpl, pavlakos2019expressive}) rely on global shape priors. These approaches can be refined with per-vertex offsets~\cite{xiang2020monoclothcap} or integrated into neural fields. Subject-specific templates further boost precision through silhouette constraints and local rigidity priors~\cite{habermann2019livecap, habermann2020deepcap}.
+
+\subsection{Hands, Faces, and Animals}
+\label{subsec:other_objects}
+\paragraph{Hands.}
+Articulated objects like hands require specialized modeling due to frequent self-occlusion and dexterous poses. MANO~\cite{romero2022embodied} offers a low-dimensional hand prior, enabling methods like HTML~\cite{qian2020html} to track both shape and texture. Some pipelines handle multi-hand interactions or manipulations by advanced occlusion-aware strategies~\cite{corona2022lisa}.
+
+\paragraph{Faces.}
+Facial reconstruction extends from classic 3D Morphable Models to neural detail extraction, providing highly detailed dynamic faces. Nevertheless, large expression changes and partial occlusions remain challenges for time-coherent surface recovery.
+
+\paragraph{Animals.}
+Animal reconstruction is complicated by diverse body shapes and limited ground-truth data. SMAL~\cite{zuffi20173d} or similar parametric rigs can approximate quadrupeds~\cite{zuffi2018lions}, while advanced learning-based methods integrate sparse keypoints or segmentation to infer shape. Fine-grained geometry (e.g., fur details) is still nontrivial.
+
+\paragraph{Human.}
+\textbf{HumanSplat}~\cite{pan2024humansplat} tackles single-image 3D human reconstruction using Gaussian splatting. The method learns to predict 3D splats from just one image in a generalizable manner, integrating geometric and semantic features through a latent reconstruction Transformer. A hierarchical loss function further leverages human structure priors to achieve high-fidelity texturing and novel-view synthesis. Experiments on both standard benchmarks and in-the-wild images demonstrate superior photorealism over prior approaches, indicating that bridging Gaussian-based representations and semantic constraints can greatly enhance single-view human capture.
+
+\subsection{Event Camera and Physics-based Methods}
+\label{subsec:event_physics}
+\paragraph{Event Cameras.}
+High-speed, asynchronous event cameras capture intensity changes at microsecond resolution, beneficial for rapidly moving non-rigid surfaces~\cite{xu2020eventcap, zou2021eventhpe}. Nonetheless, the data representation and noise characteristics of event streams require specialized reconstructions.
+
+\paragraph{Physics-based Reconstruction.}
+Incorporating physical models, such as elasticity and collision constraints, has proved promising for realistic monocular non-rigid reconstruction~\cite{malti2017elastic, ozgur2017particle, kairanda2022f}. Although physically correct solutions can yield accurate cloth or soft tissue deformations, computational cost and unknown material parameters pose difficulties.
+
+
+\section{Generic 3D Models from Videos}
+\label{sec:generic_3d_models}
+
+In addition to 2D-based long-term point tracking, an important thread of research focuses on constructing or inferring \emph{generic} 3D object models from monocular videos. These approaches can go beyond tracking to enable novel view synthesis, 3D reconstruction, shape manipulation, and animation of objects not limited to specific object categories or pre-existing templates. Below, we discuss several representative methods for learning such deformable 3D models directly from casually captured videos or minimally supervised data.
+
+\subsection{LASR: Learning Articulated Shape Reconstruction from a Monocular Video~\cite{yang2021lasr}}
+\textbf{Motivation and Scope.} 
+LASR addresses articulated 3D shape reconstruction of \emph{new} objects from single monocular videos, without relying on category-specific models (e.g., SMPL for humans or SMAL for animals). The authors observe that prior approaches often assume strong priors (template shapes, 3D scans, or keypoint annotations) that are unavailable for many categories in the wild. 
+
+\paragraph{Key Ingredients.}
+\begin{itemize}
+    \item \textbf{Template-Free Optimization:} LASR adopts an analysis-by-synthesis framework, iteratively matching forward-rendered silhouettes, optical flow, and appearance to the actual video observations. Instead of a parametric body model, it uses a general mesh and a linear blend skinning approach.
+    \item \textbf{Rigidity and Motion Priors:} While it does not employ a global template for shape categories, LASR incorporates local shape constraints, a coarse-to-fine re-meshing approach, and an articulated motion representation (bones + blend skinning). This set of priors constrains the solution space so that physically implausible deformations are penalized.
+    \item \textbf{Self-Supervision via Silhouettes and Flow:} LASR depends on automatically segmented object masks (e.g., from an off-the-shelf method) and optical flow estimates to drive the reconstruction, aligning 2D cues with the evolving 3D model.
+\end{itemize}
+
+\paragraph{Results and Observations.}
+LASR demonstrates promising reconstructions for challenging sequences, including animals such as dogs, horses, camels, and certain classes of human performers with nontrivial costumes (e.g., ribbons). It excels at capturing instance-specific details (e.g., the humps of a camel). However, the optimization is computationally intensive (hours for a short sequence) and can fail if the object is heavily occluded or unsegmented. Nonetheless, its success without category templates illustrates the feasibility of generalizable monocular 3D reconstruction from videos.
+
+\subsection{BANMo: Building Animatable 3D Neural Models from Casual Videos}
+\label{subsec:banmo}
+\textbf{Motivation and Overview.}
+BANMo proposes to learn \emph{animatable}, high-fidelity 3D object models from unstructured videos by integrating neural radiance fields (NeRF) with classic kinematic modeling. In contrast to short video or multi-view constraints, BANMo aims to fuse many casual or partially overlapping videos of the same subject over time, bridging large motion displacements.
+
+\paragraph{Core Components.}
+\begin{itemize}
+    \item \textbf{Global Canonical Embedding and Per-Frame Poses:} BANMo uses a canonical 3D volume combined with an articulated bone/rig structure (blend-skinning) to warp the canonical model into each video frame. This allows large articulations (e.g., for animals or humans) and consistently merges multi-video data.
+    \item \textbf{Neural Radiance Fields with Feature-Metric Constraints:} BANMo uses volumetric rendering – learned via photometric and silhouette losses – along with “correspondence embeddings” from a pretrained DensePose-CSE or similar model to align frames. This combination ensures that color and semantics unify across widely varying frames.
+    \item \textbf{Category-Agnostic Pipeline:} Although BANMo can exploit shape cues from certain pretrained feature embeddings (e.g., DensePose for humans), its kinematic rig is not strictly category-specific, making it more generalizable to new objects.
+\end{itemize}
+
+\paragraph{Applications and Results.}
+BANMo shows improved geometry and motion reconstructions on both synthetic and real videos compared to single-view or short-frame approaches. The learned skeleton allows retargeting of motion, meaning the model can re-animate a subject using pose sequences from another video. Its multi-video synergy leads to higher-fidelity geometry, but it relies on a suitable feature embedding (DensePose for humans, etc.) and demands significant GPU time for multi-video optimization.
+
+\subsection{ViSER: Video-Specific Surface Embeddings for Articulated 3D Shape~\cite{yang2021viser}}
+\textbf{Motivation and Overview.}
+ViSER focuses on reconstructing and tracking deformable or articulated objects from a single segmented video, without the necessity of multi-camera setups or strong category priors (like parametric body models). The key insight is to formulate a \emph{video-specific} set of learned surface embeddings that serve as continuous descriptors over the canonical object surface.
+
+\paragraph{Technical Highlights.}
+\begin{itemize}
+    \item \textbf{Video-Specific Embeddings as Continuous Keypoints:} Each 3D point on the canonical mesh is assigned a learned descriptor. During training, 2D pixels are matched to these descriptors, enabling the method to infer correspondences across long time ranges.
+    \item \textbf{Coordinate-Based MLP and Self-Supervision:} By combining flow and silhouette cues with a minimal set of global shape constraints, ViSER iteratively refines a canonical mesh and per-frame transformations. The method is robust to unusual poses or extended occlusions, as the embeddings can track long-range correspondences.
+    \item \textbf{Single \vs Multi-Video Extension:} While ViSER is originally designed for single-video optimization, it can be extended to fuse multiple videos of the same category, leading to more complete reconstruction of occluded or unseen parts (e.g., the hind legs of an elephant).
+\end{itemize}
+
+\paragraph{Comparison and Constraints.}
+ViSER is an analysis-by-synthesis framework like LASR but relies heavily on a learned 2D-3D embedding (rather than a parametric bone/rig prior). It can outperform or complement template-based methods when the object deviates significantly from any known shape. However, convergence can be sensitive to optical flow quality and random initialization, and training can require hours per sequence.
+
+\subsection{DOVE: Learning Deformable 3D Objects by Watching Videos~\cite{wu2023dove}}
+\textbf{Motivation and Scope.}
+DOVE explores an \emph{unsupervised} route to learn 3D deformable object categories from large collections of videos. The approach dispenses with explicit keypoint supervision, viewpoint annotations, or template shapes—only leveraging external object segmentation or bounding boxes. The end goal is a category-level 3D model that can reconstruct new instances (from the same category) in a single image, capturing both shape and articulation.
+
+\paragraph{Core Contributions.}
+\begin{itemize}
+    \item \textbf{Category Shape Prior:} While DOVE does not rely on template-based shapes (like SMPL/SMAL), it does learn a category-level prior by training on multiple videos of the same class, improving consistency over single-video methods.
+    \item \textbf{Symmetry and Bone Structures:} Like other methods, DOVE imposes shape symmetry constraints for objects such as birds or quadrupeds, plus a user-provided skeleton definition (e.g., for wings or legs). This helps factor out articulation from overall shape.
+    \item \textbf{Joint Pose, Shape, and Texture Inference:} Each training video is explained by an underlying canonical shape, an articulated transformation, and an appearance field. Repeated exposures to the same class yields a more stable category prior.
+\end{itemize}
+
+\paragraph{Empirical Analysis.}
+DOVE shows improved viewpoint coverage and shape consistency versus purely single-instance methods (e.g., LASR or single-video setups). It also outperforms prior approaches that lack skeleton priors on certain animals. However, it requires well-segmented training data and a consistent articulation topology, making it less flexible for non-rigid or topologically diverse classes.
+
+\subsection{Discussion and Comparisons}
+\textbf{Visual Fidelity vs. Generality.}
+- \emph{Single-Video Approaches (LASR, ViSER)} typically excel at modeling instance-specific detail and do not require large category-level datasets. However, they can struggle with heavy occlusions or segmentations and often need lengthy test-time optimization.
+- \emph{Category-Level Approaches (DOVE, BANMo in multi-video settings)} can better handle missing views or heavily deformed poses by pooling information across many videos. Yet, they often require consistent skeleton assumptions or pretrained embeddings (e.g., DensePose), which are somewhat category-limited.
+
+\textbf{Reconstruction vs. Editability.}
+- Most methods (LASR, ViSER, BANMo) provide an articulated or deformable mesh that can be re-posed, though the complexity of rigs or MLP embeddings can vary. DOVE similarly yields an animatable mesh with discovered articulation.
+- In practice, the ease of editing (e.g., retargeting motions, changing texture) depends on whether the approach yields an explicit mesh with meaningful skinning weights (LASR, BANMo) or a neural implicit volume. Hybrid solutions (BANMo’s radiance fields plus an articulated skeleton) can be more powerful for photorealistic rendering but are somewhat less direct to manipulate in 3D content creation pipelines.
+
+\textbf{Open Challenges.}
+- \emph{Temporal efficiency:} Many methods require hours of test-time optimization (LASR, ViSER), limiting real-world applicability.
+- \emph{Occlusions and viewpoint diversity:} All methods rely on either reliable silhouettes, multiview coverage, or approximate shape priors. Heavy occlusions and limited viewpoint changes remain problematic.
+- \emph{Extension beyond single objects:} Incorporating scenes with multiple, possibly interacting objects is still relatively underexplored.
+
+Overall, these approaches reveal how leveraging optical flow, silhouettes, or local 2D correspondences can push monocular 3D reconstruction closer to real, in-the-wild settings, bridging the gap between simplistic single-frame assumptions and the richly structured motion cues in casually captured videos.
+
+
+\section{Controllable Deformation}
+
+\vspace{1em}
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
+
+
+\section{Controllable Deformation}
+
+\vspace{1em}
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
+
+
