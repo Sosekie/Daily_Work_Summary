@@ -5,6 +5,22 @@
 - Data washing.
 - sds loss.
 
+## 4/7/2025
+
+### Main Object:
+Run Finetuning
+
+### How things going:
+
+[ ] Get caption for each clip
+    - extract key frames
+    - get caption
+[ ] Input should be (caption, image)
+
+
+
+
+
 ## 3/14/2025 - 3/15/2025
 
 ### Main Object:
@@ -28,6 +44,9 @@ Get HF format plant dataset.
     - 1. histogram，optical flow，pixel level rgb
     - 2. resnet feature，dino feature (take t and t+1 frame and plot 0-1, 1-2, 2-3)
     - ![dino](dino.jpg)
+
+
+
 
 
 ## 3/13/2025
