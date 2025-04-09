@@ -18,9 +18,18 @@ Finish finetuning
 [ ] Use multires for training (the forums say that a few hundred videos converge easily, but a few thousand videos don't work well, and you need multi-sized videos).
 [ ] In addition to multi-size images, it is also possible to group the current dataset, e.g., to train a model specifically for “plant seeds breaking out of the ground”.
 
-[ ] On 5090, train a initial model first.
-[ ] On 4090, do data processing.
-[ ] Have a nice sleep.
+[x] On 5090, train a initial model first.
+    - Not so good, static.
+[x] On 4090, do data processing.
+
+Processing video: 1087 Days Of Plant Growth In 15 Minutes-69.mp4
+Processed video saved to: PerfectVideoClips768x512_processed/PerfectVideoClips768x512_10/1087 Days Of Plant Growth In 15 Minutes-69.mp4
+Identified plant species: Amaranth
+Identified growth stage: seedling
+Identified camera view: close-up
+Generated final caption: a photography of a plant with green leaves in a container With plant species of Amaranth, growth stage at seedling, close-up camera.
+
+[x] Have a nice sleep.
 
 ## 4/7/2025
 
