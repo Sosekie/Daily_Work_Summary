@@ -5,6 +5,23 @@
 - Data washing.
 - sds loss.
 
+
+## 4/9/2025
+
+### Main Object:
+Finish finetuning
+
+### How things going:
+
+[ ] Extract one frame every 10 frames(Problems with few changes in the picture).
+[ ] Give each video a detailed caption, specifically “image content + plant growth”, which can be done using CLIP. LTX is very concerned about the quality of the prompt.
+[ ] Use multires for training (the forums say that a few hundred videos converge easily, but a few thousand videos don't work well, and you need multi-sized videos).
+[ ] In addition to multi-size images, it is also possible to group the current dataset, e.g., to train a model specifically for “plant seeds breaking out of the ground”.
+
+[ ] On 5090, train a initial model first.
+[ ] On 4090, do data processing.
+[ ] Have a nice sleep.
+
 ## 4/7/2025
 
 ### Main Object:
@@ -12,11 +29,11 @@ Run Finetuning
 
 ### How things going:
 
-[ ] Get caption for each clip
+[x] Get caption for each clip
     - extract key frames
     - get caption
-[ ] Input should be (caption, image)
-
+[x] Input should be (caption, image)
+    - LTX has problem in validation period, OOM
 
 
 
