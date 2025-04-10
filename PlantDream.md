@@ -5,31 +5,60 @@
 - Data washing.
 - sds loss.
 
+## 4/9/2025 - 4/10/2025
 
-## 4/9/2025
+### Main Object:
+Integrate SVD with PlantDream.
+
+### How things going:
+[ ] Try SVD on PlantDream.
+
+
+
+
+
+
+## 4/9/2025 - 4/10/2025
 
 ### Main Object:
 Finish finetuning
 
 ### How things going:
 
-[ ] Extract one frame every 10 frames(Problems with few changes in the picture).
-[ ] Give each video a detailed caption, specifically “image content + plant growth”, which can be done using CLIP. LTX is very concerned about the quality of the prompt.
-[ ] Use multires for training (the forums say that a few hundred videos converge easily, but a few thousand videos don't work well, and you need multi-sized videos).
-[ ] In addition to multi-size images, it is also possible to group the current dataset, e.g., to train a model specifically for “plant seeds breaking out of the ground”.
+[x] Extract one frame every 5 frames(Problems with few changes in the picture).
+
+[x] Give each video a detailed caption, specifically “image content + plant growth”, which can be done using CLIP. LTX is very concerned about the quality of the prompt.
 
 [x] On 5090, train a initial model first.
     - Not so good, static.
-[x] On 4090, do data processing.
 
-Processing video: 1087 Days Of Plant Growth In 15 Minutes-69.mp4
-Processed video saved to: PerfectVideoClips768x512_processed/PerfectVideoClips768x512_10/1087 Days Of Plant Growth In 15 Minutes-69.mp4
-Identified plant species: Amaranth
-Identified growth stage: seedling
-Identified camera view: close-up
-Generated final caption: a photography of a plant with green leaves in a container With plant species of Amaranth, growth stage at seedling, close-up camera.
+[x] On 4090, do data processing.
+    Processing video: 1087 Days Of Plant Growth In 15 Minutes-69.mp4
+    Processed video saved to: PerfectVideoClips768x512_processed/PerfectVideoClips768x512_10/1087 Days Of Plant Growth In 15 Minutes-69.mp4
+    Identified plant species: Amaranth
+    Identified growth stage: seedling
+    Identified camera view: close-up
+    Generated final caption: a photography of a plant with green leaves in a container With plant species of Amaranth, growth stage at seedling, close-up camera.
 
 [x] Have a nice sleep.
+
+[ ] Use multires for training (the forums say that a few hundred videos converge easily, but a few thousand videos don't work well, and you need multi-sized videos).
+
+[ ] In addition to multi-size images, it is also possible to group the current dataset, e.g., to train a model specifically for “plant seeds breaking out of the ground”.
+
+[x] Watermark, using laion + prompt to remove it.
+
+[x] Camera motion, using optical flow + prompt to remove it.
+    - If there is camera movement, then both global and local are high, then camera_motion_score is high against camera movement;
+    - If the camera didn't move and the plant is growing but only appears in some of the panels, then the overall global_motion_score is low, and a few panels in the localized area are high and others are low, then camera_motion_score is low, in line with the camera not moving.
+    - If the camera didn't move and the plant growth covered the whole screen, then camera_motion_score is also high, which is a problem. But let's not solve this problem at this stage.
+    Current: camera_motion_score = global_motion_score * median(normalized_local_scores)
+
+[ ] CLIP species may have problem, try plant classification method.
+    - https://huggingface.co/foduucom/plant-leaf-detection-and-classification, but limited set of plant classes (≈46).
+ 
+
+
 
 ## 4/7/2025
 
