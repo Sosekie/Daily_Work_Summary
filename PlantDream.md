@@ -1,17 +1,16 @@
 # PlantDream
 
-- optical flow RAFT, visualize the area to see it is wrong.
-- LTX, image input-output.
-- Data washing.
-- sds loss.
 
-## 4/9/2025 - 4/10/2025
+
+
+
+## 4/11/2025 - 4/12/2025
 
 ### Main Object:
-Integrate SVD with PlantDream.
+Finish finetuning
 
 ### How things going:
-[ ] Try SVD on PlantDream.
+[ ] Finish finetuning
 
 
 
