@@ -3,14 +3,38 @@
 
 
 
+## 4/15/2025
 
-## 4/11/2025 - 4/12/2025
+### Main Object:
+Integrate LTX into PlantDream.
+
+### How things going:
+
+
+
+
+
+## 4/14/2025
+
+### Main Object:
+Testing model usability
+
+### How things going:
+[x] Inference
+[x] VRAM problem
+[x] Test on real dataset
+
+
+
+
+
+## 4/11/2025 - 4/13/2025
 
 ### Main Object:
 Finish finetuning
 
 ### How things going:
-[ ] Finish finetuning
+[x] Finish finetuning
 
 
 
