@@ -5,12 +5,41 @@
 [ ] Rewrite plantdream
 
 
+
+
+
+## 4/16/2025
+
+### Main Object:
+Integrate LTX into PlantDream.
+
+### How things going:
+[ ] Integrate GS results with DreamGaussian4D, replace LGM.
+
+
+
+
+
+
 ## 4/15/2025
 
 ### Main Object:
 Integrate LTX into PlantDream.
 
 ### How things going:
+
+[x] Follow orbit camera system
+
+[x] Try to replace SVD with LTX-Video.
+    - [x] Using CLIP/BLIP caption generation pipeline to get prompt.
+    - [x] Replace by LTX-Video.
+    - [x] Padding more space.
+
+[ ] Replace zero123 with LTX-Video.
+    - Zero123's sds cannot be used for training at all and will cause reconstruction to fail!
+    - SVD's positive ‘sds’-based results are also good, which is good news and means that training with only SVD's sds loss works.
+    <!-- - SVD's ‘pixel reconstruction’ based fronts are great, but the side backs are terrible.
+    - SVD's positive ‘sds’-based results are also good, which is good news and means that training with only SVD's sds loss works. -->
 
 
 
