@@ -1,6 +1,8 @@
 # PlantDream
 
-
+## TODO
+[ ] For artifacts, using refine network on LTX
+[ ] Rewrite plantdream
 
 
 ## 4/15/2025
