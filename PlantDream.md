@@ -2,6 +2,7 @@
 
 ## TODO
 [ ] For artifacts, using refine network on LTX
+    - [ ] 
 [ ] Rewrite plantdream
 
 
@@ -36,10 +37,8 @@ Integrate LTX into PlantDream.
     - [x] Padding more space.
 
 [ ] Replace zero123 with LTX-Video.
-    - Zero123's sds cannot be used for training at all and will cause reconstruction to fail!
-    - SVD's positive ‘sds’-based results are also good, which is good news and means that training with only SVD's sds loss works.
-    <!-- - SVD's ‘pixel reconstruction’ based fronts are great, but the side backs are terrible.
-    - SVD's positive ‘sds’-based results are also good, which is good news and means that training with only SVD's sds loss works. -->
+    - [x] Zero123's sds cannot be used for training at all and will cause reconstruction to fail!
+    - [ ] All three of SVD's loss counterparts work poorly. Try replacing SVD with LTX.
 
 
 
